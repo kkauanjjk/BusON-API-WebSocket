@@ -1,10 +1,11 @@
 from flask import Flask, request, jsonify
 from pymongo import MongoClient
 from constants import API_HOST
+from flask_cors import CORS
 import time  
 
 app = Flask(__name__)
-
+CORS(app, resources={r"/api/*": {"origins": f"{API_HOST}"}})
 # client = MongoClient("mongodb://localhost:27017")
 # db = client["transport_data"]
 
@@ -130,4 +131,4 @@ def health_check():
     return jsonify({"status": "healthy"}), 200
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', debug=True, port=5000)
+    app.run(host='0.0.0.0', debug=True)
