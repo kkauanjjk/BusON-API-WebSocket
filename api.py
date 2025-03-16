@@ -5,7 +5,7 @@ from flask_cors import CORS
 import time  
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": f"{API_HOST}"}})
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 # client = MongoClient("mongodb://localhost:27017")
 # db = client["transport_data"]
 
