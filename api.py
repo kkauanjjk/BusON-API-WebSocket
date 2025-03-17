@@ -1,68 +1,53 @@
 from flask import Flask, request, jsonify
 from pymongo import MongoClient
 from constants import API_HOST
-from flask_cors import CORS
-import time  
+import time
+import pytz
+from datetime import datetime
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}})
-# client = MongoClient("mongodb://localhost:27017")
-# db = client["transport_data"]
 
+# Conexão com o MongoDB
 connection_string = "mongodb+srv://QuadCore:AViuL9s9QSgkCBX7@buson.rhgqz.mongodb.net/transport_data?retryWrites=true&w=majority"
 client = MongoClient(connection_string)
 db = client["BusON_Crowdsourcing"]
 
-# Verifique as coleções disponíveis
-print(db.list_collection_names())
-
 def get_bus_collection(ssid):
     return db[f"bus_{ssid}"]
+
+def get_brazil_timestamp():
+    brasil_tz = pytz.timezone("America/Sao_Paulo")
+    return datetime.now(brasil_tz).strftime('%Y-%m-%d %H:%M:%S %z')
 
 def create_or_update_user(bus_ssid, user_id, latitude, longitude, speed, rssi, heading, timestamp):
     collection = get_bus_collection(bus_ssid)
 
     existing_user = collection.find_one({"_id": user_id})
     frame_data = {
-        "timestamp": timestamp,  # Coloca timestamp dentro do frame
+        "timestamp": timestamp,
         "latitude": latitude,
         "longitude": longitude,
-        "speed": speed,  # Substituído de 'velocidade' para 'speed'
+        "speed": speed,
         "RSSI": rssi,
-        "heading": heading  # Adiciona o campo heading
+        "heading": heading
     }
 
     if not existing_user:
         collection.insert_one({
             "_id": user_id,
             "ssid": bus_ssid,
-            "last_update": {
-                "timestamp": timestamp,  
-                "latitude": latitude,
-                "longitude": longitude,
-                "speed": speed,  
-                "RSSI": rssi,
-                "heading": heading  
-            },
+            "last_update": frame_data,
             "user_movimentation": {
                 "time_frame_1": frame_data
             }
         })
     else:
         movement_key = f"time_frame_{len(existing_user['user_movimentation']) + 1}"
-
         collection.update_one(
             {"_id": user_id},
             {
                 "$set": {
-                    "last_update": {
-                        "timestamp": timestamp,  
-                        "latitude": latitude,
-                        "longitude": longitude,
-                        "speed": speed,  
-                        "RSSI": rssi,
-                        "heading": heading
-                    },
+                    "last_update": frame_data,
                     f"user_movimentation.{movement_key}": frame_data
                 }
             }
@@ -79,10 +64,8 @@ def create_or_update_movement():
         return jsonify({"error": "JSON inválido"}), 400
 
     try:
-        # Log para depuração
         print("Dados recebidos:", data)
 
-        # Verifica se todos os campos obrigatórios estão presentes
         required_fields = ["bus_ssid", "user_id", "latitude", "longitude", "speed", "rssi", "heading"]
         for field in required_fields:
             if field not in data:
@@ -92,12 +75,11 @@ def create_or_update_movement():
         user_id = data["user_id"]
         latitude = data["latitude"]
         longitude = data["longitude"]
-        speed = data["speed"]  # Alterado de 'velocidade' para 'speed'
+        speed = data["speed"]
         rssi = data["rssi"]
-        heading = data["heading"]  # Novo campo
+        heading = data["heading"]
         
-        # Obtém o tempo atual com fuso horário
-        timestamp = time.strftime('%Y-%m-%d %H:%M:%S %z', time.localtime())  # Formato: '2025-03-14 14:25:30 +0000'
+        timestamp = get_brazil_timestamp()
 
         create_or_update_user(bus_ssid, user_id, latitude, longitude, speed, rssi, heading, timestamp)
 
@@ -131,4 +113,4 @@ def health_check():
     return jsonify({"status": "healthy"}), 200
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host=API_HOST, debug=True, port=5000)
