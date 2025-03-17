@@ -13,7 +13,7 @@ client = MongoClient(connection_string)
 db = client["BusON_Crowdsourcing"]
 
 def get_bus_collection(ssid):
-    return db[f"bus_{ssid}"]
+    return db[f"{ssid}"]
 
 def get_brazil_timestamp():
     brasil_tz = pytz.timezone("America/Sao_Paulo")
