@@ -13,18 +13,29 @@ client = MongoClient(connection_string)
 db = client["BusON_Crowdsourcing"]
 
 def get_bus_collection(ssid):
+    
     return db[f"line_{ssid}"]
+
+
+def format_bus_collection(ssid):
+    splited_bus_ssid = ssid.split("/")
+    
+    bus_line = f"line_{splited_bus_ssid[0]}"
+    bus_id = f"bus_{splited_bus_ssid[1]}"
+    collection = bus_line + bus_id
+    
+    return collection, bus_line, bus_id, ssid
 
 def get_brazil_timestamp():
     brasil_tz = pytz.timezone("America/Sao_Paulo")
     return datetime.now(brasil_tz).strftime('%Y-%m-%d %H:%M:%S %z')
 
 def create_or_update_user(bus_ssid, user_id, latitude, longitude, speed, rssi, heading, timestamp):
-    collection = get_bus_collection(bus_ssid)
+    collection, bus_line, bus_id, ssid = format_bus_collection(bus_ssid)
 
     existing_user = collection.find_one({"_id": user_id})
     frame_data = {
-        "timestamp": timestamp,
+        "time": timestamp,
         "latitude": latitude,
         "longitude": longitude,
         "speed": speed,
@@ -35,7 +46,9 @@ def create_or_update_user(bus_ssid, user_id, latitude, longitude, speed, rssi, h
     if not existing_user:
         collection.insert_one({
             "_id": user_id,
-            "ssid": bus_ssid,
+            "bus_line": bus_line,
+            "bus_id": bus_id,
+            "ssid": ssid,
             "last_update": frame_data,
             "user_movimentation": {
                 "time_frame_1": frame_data
