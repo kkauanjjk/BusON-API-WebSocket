@@ -24,7 +24,7 @@ def format_bus_collection(ssid):
     bus_id = f"bus_{splited_bus_ssid[1]}"
     collection = bus_line + bus_id
     
-    return collection, bus_line, bus_id, ssid
+    return db[collection], bus_line, bus_id, ssid
 
 def get_brazil_timestamp():
     brasil_tz = pytz.timezone("America/Sao_Paulo")
