@@ -22,10 +22,10 @@ def format_bus_collection(ssid):
     
     bus_line = f"line_{splited_bus_ssid[0]}"
     bus_id = f"bus_{splited_bus_ssid[1]}"
-    collection = bus_line + bus_id
+    collection = f"{bus_line}/{bus_id}"
     
     return db[collection], bus_line, bus_id, ssid
-
+ 
 def get_brazil_timestamp():
     brasil_tz = pytz.timezone("America/Sao_Paulo")
     return datetime.now(brasil_tz).strftime('%Y-%m-%d %H:%M:%S %z')
