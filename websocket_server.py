@@ -2,37 +2,33 @@ import asyncio
 import websockets
 import json
 import os
+import http
 from pymongo import MongoClient
-from http import HTTPStatus
-from websockets.http import Headers
 
-# Conexão com MongoDB
-connection_string = "mongodb+srv://QuadCore:AViuL9s9QSgkCBX7@buson.rhgqz.mongodb.net/transport_data?retryWrites=true&w=majority"
-client = MongoClient(connection_string)
+# Definições de conexão com MongoDB
+MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://QuadCore:AViuL9s9QSgkCBX7@buson.rhgqz.mongodb.net/transport_data?retryWrites=true&w=majority")
+client = MongoClient(MONGO_URI)
 db = client["BusON_Crowdsourcing"]
 collection = "buses_locations"
 
-# Porta definida pelo Render
-PORT = int(os.getenv("PORT", 10000))
+# Porta do servidor
+PORT = int(os.getenv("PORT", 8080))
 
-# Função para responder ao Health Check
 async def health_check(path, request_headers):
-    if path == "/health":
-        return HTTPStatus.OK, Headers(), b"OK"
-    return None  # Continua para o WebSocket
+    if path == "/healthz":
+        return http.HTTPStatus.OK, [], b"OK\n"
 
-# Servidor WebSocket
 async def send_locations(websocket):
     try:
         active_buses_ssid = await websocket.recv()
-        active_buses_ssid = json.loads(active_buses_ssid)
+        active_buses_ssid = json.loads(active_buses_ssid) 
 
         print(f"Ônibus ativos recebidos: {active_buses_ssid}")
 
         while True:
             updated_locations = []
             for bus_ssid in active_buses_ssid:
-                document = db["buses_locations"].find_one({"_id": bus_ssid})
+                document = db[collection].find_one({"_id": bus_ssid})
                 if document:
                     updated_position = {
                         "_id": bus_ssid,
@@ -50,15 +46,10 @@ async def send_locations(websocket):
     except Exception as e:
         print(f"Erro: {e}")
 
-async def start_websocket_server():
-    async with websockets.serve(
-        send_locations,
-        "0.0.0.0",
-        PORT,
-        process_request=health_check  # Adiciona o health check na mesma porta
-    ):
+async def main():
+    async with websockets.serve(send_locations, "0.0.0.0", PORT, process_request=health_check):
         print(f"Servidor WebSocket rodando na porta {PORT}")
-        await asyncio.Future()  # Mantém o servidor rodando
+        await asyncio.Future()
 
-# Inicia o servidor WebSocket
-asyncio.run(start_websocket_server())
+if __name__ == "__main__":
+    asyncio.run(main())
