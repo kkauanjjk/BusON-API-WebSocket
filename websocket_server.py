@@ -48,7 +48,7 @@ async def send_locations(websocket):
 
 async def main():
     PORT = int(os.getenv("PORT", 8765))
-    async with websockets.serve(send_locations, '0.0.0.0', PORT):
+    async with websockets.serve(send_locations, API_WEBSOCKET, PORT):
         print(f"Servidor WebSocket rodando em ws://{API_WEBSOCKET}:8765")
         await asyncio.Future()  # Mantém o servidor rodando
 
