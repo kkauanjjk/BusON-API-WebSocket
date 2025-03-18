@@ -47,9 +47,9 @@ async def send_locations(websocket):
         print(f"Erro: {e}")
 
 async def main():
-    PORT = int(os.getenv("PORT", 8765))
-    async with websockets.serve(send_locations, API_WEBSOCKET, PORT):
-        print(f"Servidor WebSocket rodando em ws://{API_WEBSOCKET}:8765")
+    PORT = int(os.getenv("PORT", 10000))
+    async with websockets.serve(send_locations, '0.0.0.0', PORT):
+        print(f"Servidor WebSocket rodando em ws://{API_WEBSOCKET}:{PORT}")
         await asyncio.Future()  # Mantém o servidor rodando
 
 # Inicia o servidor
