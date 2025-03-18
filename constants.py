@@ -1,1 +1,2 @@
 API_HOST = '0.0.0.0'
+API_WEBSOCKET = '0.0.0.0'
