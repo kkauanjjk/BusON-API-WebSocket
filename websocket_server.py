@@ -16,6 +16,8 @@ PORT = int(os.getenv("PORT", 8080))
 
 async def health_check(path, request_headers):
     if path == "/healthz":
+        if "HEAD" in request_headers.get("Upgrade", ""):
+            return http.HTTPStatus.OK, [], b""  # Resposta vazia para HEAD
         return http.HTTPStatus.OK, [], b"OK\n"
 
 async def send_locations(websocket):
